@@ -52,7 +52,7 @@ app.post('/verificar/iniciar', async (req, res) => {
   const { cod_cliente } = req.body;
 
   if (!cod_cliente) return res.status(400).json({ error: 'Falta cod_cliente' });
-
+  console.log(req.body);
   try {
     // Buscar email del cliente
     const [clientes] = await dbRailway.execute(
@@ -145,6 +145,39 @@ app.get('/verificar-email', async (req, res) => {
       `SELECT * FROM verificaciones_email WHERE token = ?`,
       [token]
     );
+    const [clienteData] = await dbRailway.execute(`
+  SELECT c.email, c.nro_tarjeta
+  FROM verificaciones_email v
+  JOIN clientes_crm c ON v.cod_cliente = c.cod_cliente
+  WHERE v.token = ?
+`, [token]);
+
+    if (clienteData.length > 0) {
+      const { email, nro_tarjeta } = clienteData[0];
+
+      const { create } = require('xmlbuilder2');
+      const xml = create({ version: '1.0' })
+        .ele('MensajeFidelyGb')
+        .ele('Proveedor').txt('FIDELYGB').up()
+        .ele('CodAccion').txt('301').up()
+        .ele('NroTarjeta').txt(nro_tarjeta).up()
+        .ele('Email').txt(email).up()
+        .end({ prettyPrint: true });
+
+      console.log('📦 XML generado:\n', xml);
+
+      // Enviar a tu propio endpoint /onzecrm
+      const axios = require('axios');
+      try {
+        const respuesta = await axios.post('http://localhost:3000/onzecrm', xml, {
+          headers: { 'Content-Type': 'application/xml' }
+        });
+        console.log('📨 XML enviado, respuesta:', respuesta.status);
+      } catch (error) {
+        console.error('❌ Error al enviar XML:', error.message);
+      }
+    }
+
 
     if (rows.length === 0) {
       return res.status(404).send(`
@@ -236,5 +269,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🟢 Web Service escuchando en http://localhost:${PORT}/onzecrm`);
   setInterval(() => {
     console.log('🟢 App viva', new Date().toISOString());
-  }, 5000);
+  }, 50000);
 });
