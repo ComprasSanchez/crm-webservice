@@ -1,12 +1,20 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-const pool = mysql.createPool({
-    host: process.env.MYSQLHOST,
-    port: 3306,
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.MYSQLDATABASE
+const dbRailway = mysql.createPool({
+    host: process.env.RAILWAY_HOST,
+    port: process.env.RAILWAY_PORT || 3306,
+    user: process.env.RAILWAY_USER,
+    password: process.env.RAILWAY_PASSWORD,
+    database: process.env.RAILWAY_DB,
 });
 
-module.exports = pool;
+const dbPlex = mysql.createPool({
+    host: process.env.PLEX_HOST,
+    port: process.env.PLEX_PORT || 3306,
+    user: process.env.PLEX_USER,
+    password: process.env.PLEX_PASSWORD,
+    database: process.env.PLEX_DB,
+});
+
+module.exports = { dbRailway, dbPlex };
