@@ -10,7 +10,7 @@ const { dbRailway } = require('./db');
 const { dbPlex } = require('./db');
 const app = express();
 app.use(express.json());
-console.log("🔐 RAILWAY_HOST:", process.env.RAILWAY_HOST);
+console.log("🔐 RAILWAY_HOST:", process.env.MYSQLHOST);
 
 app.use(bodyParser.text({ type: 'application/xml' }));
 

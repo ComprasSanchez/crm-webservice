@@ -10,6 +10,7 @@ const dbRailway = mysql.createPool({
     database: process.env.MYSQLDATABASE,
 });
 
+
 // 🔗 Conexión a Plex (base original)
 const dbPlex = mysql.createPool({
     host: process.env.PLEX_HOST,
