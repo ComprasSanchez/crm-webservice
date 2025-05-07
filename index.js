@@ -65,7 +65,17 @@ app.post('/verificar/iniciar', async (req, res) => {
     const email = clientes[0].email;
     if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
 
-    // Verificar si ya tiene un token pendiente (no verificado)
+    /// 🛑 Verificar si ya está verificado
+    const [verificado] = await dbRailway.execute(`
+      SELECT verificado FROM verificaciones_email
+      WHERE cod_cliente = ? ORDER BY fecha_creacion DESC LIMIT 1
+  `, [cod_cliente]);
+
+    if (verificado.length > 0 && verificado[0].verificado === 1) {
+      return res.status(200).json({ message: '⚠️ Este email ya fue verificado' });
+    }
+
+    // 🟠 Buscar si ya hay una verificación pendiente
     const [verifs] = await dbRailway.execute(
       `SELECT id FROM verificaciones_email WHERE cod_cliente = ? AND verificado = 0`,
       [cod_cliente]
@@ -112,6 +122,80 @@ app.post('/verificar/iniciar', async (req, res) => {
   } catch (err) {
     console.error('❌ Error al iniciar verificación:', err);
     res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+app.get('/verificar-email', async (req, res) => {
+  const token = req.query.token;
+
+  if (!token) {
+    return res.status(400).send(`
+      <html>
+        <head><title>Error</title></head>
+        <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+          <h1>❌ Token faltante</h1>
+          <p>El enlace que usaste no es válido.</p>
+        </body>
+      </html>
+    `);
+  }
+
+  try {
+    const [rows] = await dbRailway.execute(
+      `SELECT * FROM verificaciones_email WHERE token = ?`,
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).send(`
+        <html>
+          <head><title>Token inválido</title></head>
+          <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+            <h1>❌ Enlace inválido</h1>
+            <p>Este enlace ya fue usado o no es correcto.</p>
+          </body>
+        </html>
+      `);
+    }
+
+    const verificacion = rows[0];
+    if (verificacion.verificado) {
+      return res.send(`
+        <html>
+          <head><title>Ya verificado</title></head>
+          <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+            <h1>⚠️ Ya está verificado</h1>
+            <p>Este correo ya fue confirmado previamente.</p>
+          </body>
+        </html>
+      `);
+    }
+
+    await dbRailway.execute(
+      `UPDATE verificaciones_email SET verificado = 1, fecha_verificacion = NOW() WHERE token = ?`,
+      [token]
+    );
+
+    res.send(`
+      <html>
+        <head><title>Email verificado</title></head>
+        <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+          <h1>✅ ¡Gracias!</h1>
+          <p>Tu email fue verificado correctamente.</p>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error('❌ Error al verificar:', err);
+    res.status(500).send(`
+      <html>
+        <head><title>Error interno</title></head>
+        <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+          <h1>❌ Error del servidor</h1>
+          <p>Ocurrió un problema al procesar tu verificación.</p>
+        </body>
+      </html>
+    `);
   }
 });
 
