@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { parseStringPromise } = require('xml2js');
 const handle300Consulta = require('./xmlHandlers/handle300Consulta');
 require('dotenv').config();
-
+const { dbPlex } = require('./db');
 const app = express();
 app.use(bodyParser.text({ type: 'application/xml' }));
 
