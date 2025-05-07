@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { parseStringPromise } = require('xml2js');
+const cors = require('cors');
 const handle300Consulta = require('./xmlHandlers/handle300Consulta');
 require('dotenv').config();
 const { dbPlex } = require('./db');
@@ -11,6 +12,11 @@ app.use((req, res, next) => {
   console.log(`📩 Llamada entrante: ${req.method} ${req.url}`);
   next();
 });
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://tudominio.com']
+}));
+
 
 app.get('/cliente/:dni', async (req, res) => {
   const dni = req.params.dni;
