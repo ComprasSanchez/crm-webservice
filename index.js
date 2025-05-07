@@ -9,6 +9,8 @@ const crypto = require('crypto');
 const { dbRailway } = require('./db');
 const { dbPlex } = require('./db');
 const app = express();
+app.use(express.json());
+
 app.use(bodyParser.text({ type: 'application/xml' }));
 
 app.use((req, res, next) => {
