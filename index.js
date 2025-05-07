@@ -54,7 +54,7 @@ app.post('/verificar/iniciar', async (req, res) => {
   if (!cod_cliente) return res.status(400).json({ error: 'Falta cod_cliente' });
 
   try {
-    // Buscar cliente en la base
+    // Buscar email del cliente
     const [clientes] = await dbRailway.execute(
       `SELECT email FROM clientes_crm WHERE cod_cliente = ?`,
       [cod_cliente]
@@ -65,18 +65,32 @@ app.post('/verificar/iniciar', async (req, res) => {
     const email = clientes[0].email;
     if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
 
-    // Generar token único
-    const token = crypto.randomBytes(16).toString('hex');
-
-    // Guardar en la tabla verificaciones_email
-    await dbRailway.execute(
-      `INSERT INTO verificaciones_email (cod_cliente, token) VALUES (?, ?)`,
-      [cod_cliente, token]
+    // Verificar si ya tiene un token pendiente (no verificado)
+    const [verifs] = await dbRailway.execute(
+      `SELECT id FROM verificaciones_email WHERE cod_cliente = ? AND verificado = 0`,
+      [cod_cliente]
     );
 
-    // Preparar transporte de correo
+    // Generar nuevo token
+    const token = require('crypto').randomBytes(16).toString('hex');
+
+    if (verifs.length > 0) {
+      // Ya existe una solicitud → actualizar token y fecha
+      await dbRailway.execute(
+        `UPDATE verificaciones_email SET token = ?, fecha_creacion = NOW() WHERE id = ?`,
+        [token, verifs[0].id]
+      );
+    } else {
+      // No existe solicitud previa → insertar nueva
+      await dbRailway.execute(
+        `INSERT INTO verificaciones_email (cod_cliente, token) VALUES (?, ?)`,
+        [cod_cliente, token]
+      );
+    }
+
+    // Enviar mail
     const transporter = nodemailer.createTransport({
-      service: 'gmail', // o SMTP si usás uno propio
+      service: 'gmail',
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS
