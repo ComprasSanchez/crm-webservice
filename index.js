@@ -10,7 +10,10 @@ const { dbRailway } = require('./db');
 const { dbPlex } = require('./db');
 const app = express();
 app.use(express.json());
-console.log("🔐 RAILWAY_HOST:", process.env.MYSQLHOST);
+console.log("🔐 MYSQLHOST:", process.env.MYSQLHOST);
+console.log("📬 MAIL_USER:", process.env.MAIL_USER);
+console.log("📬 MAIL_PASS:", process.env.MAIL_PASS ? '********' : '❌ VACÍO');
+
 
 app.use(bodyParser.text({ type: 'application/xml' }));
 
