@@ -4,6 +4,9 @@ const { parseStringPromise } = require('xml2js');
 const cors = require('cors');
 const handle300Consulta = require('./xmlHandlers/handle300Consulta');
 require('dotenv').config();
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const { dbRailway } = require('./db');
 const { dbPlex } = require('./db');
 const app = express();
 app.use(bodyParser.text({ type: 'application/xml' }));
@@ -38,6 +41,63 @@ app.get('/cliente/:dni', async (req, res) => {
     res.status(500).json({ error: 'Error al consultar cliente en Plex' });
   }
 });
+
+
+
+// 🚀 Endpoint para iniciar verificación de email
+app.post('/verificar/iniciar', async (req, res) => {
+  const { cod_cliente } = req.body;
+
+  if (!cod_cliente) return res.status(400).json({ error: 'Falta cod_cliente' });
+
+  try {
+    // Buscar cliente en la base
+    const [clientes] = await dbRailway.execute(
+      `SELECT email FROM clientes_crm WHERE cod_cliente = ?`,
+      [cod_cliente]
+    );
+
+    if (clientes.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
+
+    const email = clientes[0].email;
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
+
+    // Generar token único
+    const token = crypto.randomBytes(16).toString('hex');
+
+    // Guardar en la tabla verificaciones_email
+    await dbRailway.execute(
+      `INSERT INTO verificaciones_email (cod_cliente, token) VALUES (?, ?)`,
+      [cod_cliente, token]
+    );
+
+    // Preparar transporte de correo
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // o SMTP si usás uno propio
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS
+      }
+    });
+
+    const url = `https://crm-webservice-production.up.railway.app/verificar-email?token=${token}`;
+
+    await transporter.sendMail({
+      from: '"CRM Fidelización" <no-reply@empresa.com>',
+      to: email,
+      subject: 'Confirmación de email',
+      html: `<p>Hola, por favor confirmá tu correo haciendo clic en el siguiente enlace:</p><a href="${url}">${url}</a>`
+    });
+
+    console.log(`📧 Mail enviado a ${email} con token ${token}`);
+    res.json({ message: 'Mail enviado para verificación', email });
+
+  } catch (err) {
+    console.error('❌ Error al iniciar verificación:', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 
 app.post('/onzecrm', async (req, res) => {
   try {
