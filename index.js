@@ -59,13 +59,16 @@ app.post('/verificar/iniciar', async (req, res) => {
   try {
     // Buscar email del cliente
     const [clientes] = await dbRailway.execute(
-      `SELECT email FROM clientes_crm WHERE cod_cliente = ?`,
+      `SELECT email, telefono FROM clientes_crm WHERE cod_cliente = ?`,
       [cod_cliente]
     );
+
 
     if (clientes.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
 
     const email = clientes[0].email;
+    const telefono = clientes[0].telefono;
+
     if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
 
     /// 🛑 Verificar si ya está verificado
@@ -116,7 +119,30 @@ app.post('/verificar/iniciar', async (req, res) => {
       from: '"CRM Fidelización" <no-reply@empresa.com>',
       to: email,
       subject: 'Confirmación de email',
-      html: `<p>Hola, por favor confirmá tu correo haciendo clic en el siguiente enlace:</p><a href="${url}">${url}</a>`
+      html: `
+        <p>Hola 👋</p>
+
+        <p>En tu visita a nuestra sucursal, revisamos y actualizamos tus datos de contacto:</p>
+
+        <ul>
+          <li><strong>Email:</strong> ${email}</li>
+          <li><strong>Teléfono:</strong> ${telefono || 'Sin registrar'}</li>
+        </ul>
+
+        <p>Para completar la actualización, confirmá tu correo haciendo clic en el siguiente botón:</p>
+
+        <p style="text-align: center; margin-top: 20px;">
+          <a href="${url}"
+            style="background-color: #2e7d32; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            ✅ Confirmar mi correo electrónico
+          </a>
+        </p>
+
+        <p style="margin-top: 30px;">Si detectás algún error, podés corregirlo en tu próxima visita o comunicarte con nuestro equipo de atención.</p>
+
+        <p style="font-size: 0.9em; color: #666;">Este mensaje fue generado automáticamente. No respondas a este correo.</p>
+      `
+
     });
 
     console.log(`📧 Mail enviado a ${email} con token ${token}`);
