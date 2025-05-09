@@ -52,7 +52,8 @@ app.get('/cliente/:dni', async (req, res) => {
 
 // 🚀 Endpoint para iniciar verificación de email
 app.post('/verificar/iniciar', async (req, res) => {
-  const { cod_cliente } = req.body;
+  const { cod_cliente, email, telefono, nombre } = req.body;
+
 
   if (!cod_cliente) return res.status(400).json({ error: 'Falta cod_cliente' });
   console.log(req.body);
@@ -116,20 +117,17 @@ app.post('/verificar/iniciar', async (req, res) => {
     const url = `https://crm-webservice-production.up.railway.app/verificar-email?token=${token}`;
 
     await transporter.sendMail({
-      from: '"CRM Fidelización" <no-reply@empresa.com>',
+      from: '"Farmacia Sanchez Antoniolli" <no-reply@empresa.com>',
       to: email,
       subject: 'Confirmación de email',
       html: `
-        <p>Hola 👋</p>
-
+        <p>Hola ${nombre?.split(',')[1]?.trim() || 'cliente'} 👋</p>
         <p>En tu visita a nuestra sucursal, revisamos y actualizamos tus datos de contacto:</p>
-
         <ul>
           <li><strong>Email:</strong> ${email}</li>
           <li><strong>Teléfono:</strong> ${telefono || 'Sin registrar'}</li>
         </ul>
-
-        <p>Para completar la actualización, confirmá tu correo haciendo clic en el siguiente botón:</p>
+        <p style="text-align: center;">
 
         <p style="text-align: center; margin-top: 20px;">
           <a href="${url}"
