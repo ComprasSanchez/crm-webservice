@@ -58,19 +58,6 @@ app.post('/verificar/iniciar', async (req, res) => {
   if (!cod_cliente) return res.status(400).json({ error: 'Falta cod_cliente' });
   console.log(req.body);
   try {
-    // Buscar email del cliente
-    const [clientes] = await dbRailway.execute(
-      `SELECT email, telefono FROM clientes_crm WHERE cod_cliente = ?`,
-      [cod_cliente]
-    );
-
-
-    if (clientes.length === 0) return res.status(404).json({ error: 'Cliente no encontrado' });
-
-    const email = clientes[0].email;
-    const telefono = clientes[0].telefono;
-
-    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
 
     /// 🛑 Verificar si ya está verificado
     const [verificado] = await dbRailway.execute(`
