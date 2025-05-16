@@ -1,6 +1,6 @@
-
 // controllers/verificacionTelefonoController.js
 const { dbRailway } = require('../db');
+const { sendVerificationCode } = require('../services/smsService');
 
 function generarCodigo() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -20,7 +20,8 @@ async function iniciarVerificacionTelefono(req, res) {
             [cod_cliente, telefono, codigo]
         );
 
-        // Simulación de envío por WhatsApp o SMS
+        // Envío real por SMS/WhatsApp
+        await sendVerificationCode(telefono, codigo);
         console.log(`📲 Código de verificación ${codigo} enviado a ${telefono}`);
 
         res.json({ message: 'Código enviado al cliente' });
@@ -47,12 +48,15 @@ async function confirmarCodigoTelefono(req, res) {
             return res.status(401).json({ error: 'Código incorrecto o ya verificado' });
         }
 
+        // Marcar como verificado
         await dbRailway.execute(
             `UPDATE verificaciones_telefono SET verificado = 1, fecha_verificacion = NOW() WHERE id = ?`,
             [rows[0].id]
         );
 
         res.json({ message: '✅ Teléfono verificado correctamente' });
+
+        // Aquí podrías invocar la lógica de Wibi (consulta 300 + update 101)
     } catch (err) {
         console.error('❌ Error al confirmar código:', err);
         res.status(500).json({ error: 'Error interno' });
