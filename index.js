@@ -300,6 +300,7 @@ require('dotenv').config();
 const clienteRoutes = require('./routes/cliente');
 const verificarRoutes = require('./routes/verificar');
 const onzecrmRoutes = require('./routes/onzecrm');
+const verificarTelefonoRoutes = require('./routes/verificarTelefono');
 
 const app = express();
 app.use(express.json());
@@ -312,8 +313,12 @@ app.use(cors({
 app.use('/cliente', clienteRoutes);
 app.use('/verificar', verificarRoutes);
 app.use('/onzecrm', onzecrmRoutes);
+app.use('/verificar/telefono', verificarTelefonoRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🟢 Web Service escuchando en http://localhost:${PORT}/`);
+  setInterval(() => {
+    console.log('🟢 App viva', new Date().toISOString());
+  }, 50000);
 });

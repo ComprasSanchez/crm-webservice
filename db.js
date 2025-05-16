@@ -1,6 +1,7 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+
 // 📦 Conexión a Railway (base de clientes_crm)
 const dbRailway = mysql.createPool({
     host: process.env.MYSQLHOST,
