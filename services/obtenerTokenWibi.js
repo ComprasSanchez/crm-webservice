@@ -1,7 +1,10 @@
+// services/obtenerTokenWibi.js
+
 const axios = require('axios');
 const { create } = require('xmlbuilder2');
 const { parseStringPromise } = require('xml2js');
 const https = require('https');
+require('dotenv').config();
 
 const agent = new https.Agent({ rejectUnauthorized: false });
 
@@ -9,6 +12,7 @@ let tokenCache = null;
 let tokenExpira = null;
 
 async function obtenerTokenWibi() {
+
     // Si el token existe y no expiró, devolvemos el cache
     if (tokenCache && tokenExpira && new Date() < tokenExpira) {
         return tokenCache;
