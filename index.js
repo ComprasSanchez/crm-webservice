@@ -1,4 +1,4 @@
-const express = require('express');
+/* const express = require('express');
 const bodyParser = require('body-parser');
 const { parseStringPromise } = require('xml2js');
 const cors = require('cors');
@@ -10,9 +10,7 @@ const { dbRailway } = require('./db');
 const { dbPlex } = require('./db');
 const app = express();
 app.use(express.json());
-console.log("🔐 MYSQLHOST:", process.env.MYSQLHOST);
-console.log("📬 MAIL_USER:", process.env.MAIL_USER);
-console.log("📬 MAIL_PASS:", process.env.MAIL_PASS ? '********' : '❌ VACÍO');
+const obtenerTokenWibi = require('./obtenerTokenWibi');
 
 
 app.use(bodyParser.text({ type: 'application/xml' }));
@@ -284,4 +282,38 @@ app.listen(PORT, '0.0.0.0', () => {
   setInterval(() => {
     console.log('🟢 App viva', new Date().toISOString());
   }, 50000);
+});
+
+(async () => {
+  const token = await obtenerTokenWibi();
+  console.log('🎟️ Token Wibi:', token);
+})();
+ */
+
+// index.js
+
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+require('dotenv').config();
+
+const clienteRoutes = require('./routes/cliente');
+const verificarRoutes = require('./routes/verificar');
+const onzecrmRoutes = require('./routes/onzecrm');
+
+const app = express();
+app.use(express.json());
+app.use(bodyParser.text({ type: 'application/xml' }));
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://tudominio.com']
+}));
+
+app.use('/cliente', clienteRoutes);
+app.use('/verificar', verificarRoutes);
+app.use('/onzecrm', onzecrmRoutes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🟢 Web Service escuchando en http://localhost:${PORT}/`);
 });
